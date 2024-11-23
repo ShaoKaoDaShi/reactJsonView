@@ -1,7 +1,8 @@
-import Editor, { DiffEditor, useMonaco, loader } from "@monaco-editor/react";
+import Editor, { loader } from "@monaco-editor/react";
 import * as monaco from "monaco-editor";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { parseJsonDeep } from "./parseJsonDeep";
+import { ResizeBox } from "../ResizeBox";
 
 try {
   loader.config({ monaco });
@@ -9,24 +10,24 @@ try {
   console.error(e);
 }
 
-function JsonEditor(props: { value: any }) {
-  const [jsonValue, setJsonValue] = useState<any>();
+function JsonEditor() {
+  const [jsonValue, setJsonValue] = useState<unknown>();
 
   return (
     <div style={{ flex: 1, display: "flex" }}>
-      <div style={{ flex: 1 }}>
+      <ResizeBox>
         <Editor
-          height="100%"
+          theme="vs-dark"
           defaultLanguage="json"
           onChange={(value) => {
             console.log("value", parseJsonDeep(value));
             setJsonValue(parseJsonDeep(value));
           }}
         />
-      </div>
-      <div style={{ flex: 3 }}>
+      </ResizeBox>
+      <div style={{ flex: 1 }}>
         <Editor
-          height="100%"
+          theme="vs-dark"
           defaultLanguage="json"
           value={JSON.stringify(jsonValue, null, 4)}
         />

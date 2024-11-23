@@ -1,0 +1,12 @@
+#resizable-box {
+  background-color: #4caf50;
+  position: relative;
+  border: 2px solid #333;
+  box-sizing: border-box;
+  cursor: default;
+}
+
+/* 调整大小时高亮右边框 */
+#resizable-box.resizing {
+  border-right: 2px dashed #ff9800;
+}
