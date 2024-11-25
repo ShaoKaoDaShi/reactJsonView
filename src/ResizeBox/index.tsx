@@ -15,7 +15,7 @@ export const ResizeBox = (props: { children: ReactNode }) => {
 
     const handleMouseDown = (e: MouseEvent) => {
       const rect = resizableBox.getBoundingClientRect();
-      if (e.clientX >= rect.right - 10) {
+      if (e.clientX >= rect.right - 5) {
         isResizing = true;
         resizableBox.classList.add("resizing");
         startX = e.clientX;
@@ -27,7 +27,7 @@ export const ResizeBox = (props: { children: ReactNode }) => {
 
     const handleMouseMove = throttle((e: MouseEvent) => {
       const rect = resizableBox.getBoundingClientRect();
-      if (e.clientX >= rect.right - 10 && e.clientX <= rect.right) {
+      if (e.clientX > rect.right - 5 && e.clientX < rect.right) {
         resizableBox.style.cursor = "ew-resize";
         document.body.style.cursor = "ew-resize";
       }
@@ -37,7 +37,7 @@ export const ResizeBox = (props: { children: ReactNode }) => {
       }
       if (
         !isResizing &&
-        (e.clientX > rect.right || e.clientX < rect.right - 10)
+        (e.clientX > rect.right || e.clientX < rect.right - 5)
       ) {
         document.body.style.cursor = "auto";
         resizableBox.style.cursor = "auto";
@@ -63,7 +63,7 @@ export const ResizeBox = (props: { children: ReactNode }) => {
     };
   }, []);
   return (
-    <div id="resizable-box" ref={ref} style={{ width: "300px" }}>
+    <div id="resizable-box" ref={ref}>
       {props.children}
     </div>
   );

@@ -14,7 +14,7 @@ function JsonEditor() {
   const [jsonValue, setJsonValue] = useState<unknown>();
 
   return (
-    <div style={{ flex: 1, display: "flex" }}>
+    <div style={{ width: "100vw", display: "flex", overflow: "hidden" }}>
       <ResizeBox>
         <Editor
           theme="vs-dark"
@@ -25,7 +25,7 @@ function JsonEditor() {
           }}
         />
       </ResizeBox>
-      <div style={{ flex: 1 }}>
+      <div style={{ flex: 1, background: "blueviolet", overflow: "hidden" }}>
         <Editor
           theme="vs-dark"
           defaultLanguage="json"
