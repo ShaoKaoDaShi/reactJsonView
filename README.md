@@ -59,3 +59,8 @@ TODO:
 - [ ] 发布到应用市场进行使用
 - [ ] 移动版
 - [ ] 推广这个的使用，比如在掘金，知乎，csdn，github等平台进行推广
+- [ ] 设计自己的github icon
+
+Tips:
+
+- github page icon 需要等几天之后才会更新上
