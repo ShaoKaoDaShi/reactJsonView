@@ -1,8 +1,9 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import Editor, { loader } from "@monaco-editor/react";
 import * as monaco from "monaco-editor";
 import { parseJsonDeep } from "./parseJsonDeep";
 import { ResizeBox } from "../ResizeBox";
+import { db } from "../Database/jsonParseHistory";
 
 try {
   loader.config({ monaco });
@@ -26,9 +27,17 @@ const styles = {
 
 function JsonEditor() {
   const [jsonValue, setJsonValue] = useState<unknown>(null);
+  const [orgValue, setOrgValue] = useState<string>("");
 
   // 处理编辑器内容变化
   const handleEditorChange = useCallback((value: string | undefined) => {
+    if (value !== undefined) {
+      setOrgValue(value);
+      db.jsonParseHistory.add({
+        jsonString: value,
+        date: new Date().getTime(),
+      });
+    }
     try {
       const parsedValue = parseJsonDeep(value);
       console.log("🚀 ~ Parsed JSON:", parsedValue);
@@ -39,10 +48,21 @@ function JsonEditor() {
     }
   }, []);
 
+  useEffect(() => {
+    db.jsonParseHistory.toArray().then((data) => {
+      console.log("🚀 ~ arr:", data);
+      if (data.length) {
+        const history = data.pop();
+        setOrgValue(history?.jsonString || "");
+        handleEditorChange(history?.jsonString);
+      }
+    });
+  }, []);
+
   return (
     <div style={styles.container}>
       <ResizeBox>
-        <MonacoEditor onChange={handleEditorChange} />
+        <MonacoEditor value={orgValue} onChange={handleEditorChange} />
       </ResizeBox>
 
       <div style={styles.output}>
