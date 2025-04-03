@@ -1,7 +1,11 @@
-import { keys } from "lodash";
+type StackItem = {
+  obj: unknown;
+  key?: string;
+  parent?: unknown;
+};
 
-export function parseJsonDeep(target: unknown) {
-  let parsedTarget: Record<string, unknown> | unknown;
+export function parseJsonDeep(target: unknown): unknown {
+  let parsedTarget: unknown;
 
   try {
     parsedTarget = JSON.parse(target as string);
@@ -10,9 +14,9 @@ export function parseJsonDeep(target: unknown) {
     return target;
   }
 
-  const stack: { obj: any; key?: string; parent?: any }[] = [];
+  const stack: StackItem[] = [];
 
-  if (typeof parsedTarget === "object" && parsedTarget !== null) {
+  if (isObject(parsedTarget)) {
     stack.push({ obj: parsedTarget });
   }
 
@@ -20,38 +24,50 @@ export function parseJsonDeep(target: unknown) {
     const { obj, key, parent } = stack.pop()!;
 
     if (Array.isArray(obj)) {
-      for (let i = 0; i < obj.length; i++) {
-        if (typeof obj[i] === "string") {
-          try {
-            obj[i] = JSON.parse(obj[i]);
-            stack.push({ obj: obj[i] });
-          } catch {
-            // Skip parsing if JSON.parse fails
-          }
-        } else if (typeof obj[i] === "object" && obj[i] !== null) {
-          stack.push({ obj: obj[i] });
-        }
-      }
-    } else if (typeof obj === "object" && obj !== null) {
-      keys(obj).forEach((key) => {
-        const value = obj[key];
-        if (typeof value === "string") {
-          try {
-            obj[key] = JSON.parse(value);
-            stack.push({ obj: obj[key] });
-          } catch {
-            // Skip parsing if JSON.parse fails
-          }
-        } else if (typeof value === "object" && value !== null) {
-          stack.push({ obj: value });
-        }
-      });
+      processArray(obj, stack);
+    } else if (isObject(obj)) {
+      processObject(obj, stack);
     }
 
-    if (key && parent) {
-      parent[key] = obj;
+    if (key && parent && isObject(parent)) {
+      (parent as Record<string, unknown>)[key] = obj;
     }
   }
 
   return parsedTarget;
 }
+
+function isObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function processArray(arr: unknown[], stack: StackItem[]) {
+  arr.forEach((item, i) => {
+    const parsed = parseValue(item);
+    arr[i] = parsed;
+    if (isObject(parsed)) {
+      stack.push({ obj: parsed });
+    }
+  });
+}
+
+function processObject(obj: Record<string, unknown>, stack: StackItem[]) {
+  Object.keys(obj).forEach(key => {
+    const parsed = parseValue(obj[key]);
+    obj[key] = parsed;
+    if (isObject(parsed)) {
+      stack.push({ obj: parsed });
+    }
+  });
+}
+
+const parseValue = (value: string | unknown): unknown => {
+  if (typeof value === 'string') {
+    try {
+      return JSON.parse(value);
+    } catch {
+      return value;
+    }
+  }
+  return value;
+};

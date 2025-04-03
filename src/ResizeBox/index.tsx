@@ -27,22 +27,23 @@ export const ResizeBox = (props: { children: ReactNode }) => {
 
     const handleMouseMove = throttle((e: MouseEvent) => {
       const rect = resizableBox.getBoundingClientRect();
-      if (e.clientX > rect.right - 5 && e.clientX < rect.right) {
+      const isNearEdge = e.clientX > rect.right - 10 && e.clientX < rect.right + 10;
+      
+      if (isNearEdge && !isResizing) {
         resizableBox.style.cursor = "ew-resize";
         document.body.style.cursor = "ew-resize";
+        return;
       }
+      
       if (isResizing) {
         const newWidth = Math.max(startWidth + (e.clientX - startX), MIN_WIDTH);
         resizableBox.style.width = `${newWidth}px`;
+        return;
       }
-      if (
-        !isResizing &&
-        (e.clientX > rect.right || e.clientX < rect.right - 5)
-      ) {
-        document.body.style.cursor = "auto";
-        resizableBox.style.cursor = "auto";
-      }
-    }, 64);
+      
+      document.body.style.cursor = "auto";
+      resizableBox.style.cursor = "auto";
+    }, 16);
 
     // 鼠标松开事件：结束拖拽
     const handleMouseUp = () => {

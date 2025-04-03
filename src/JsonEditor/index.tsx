@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import Editor, { loader } from "@monaco-editor/react";
 import * as monaco from "monaco-editor";
 import { parseJsonDeep } from "./parseJsonDeep";
@@ -17,34 +17,45 @@ const styles = {
     width: "100vw",
     display: "flex",
     overflow: "hidden",
+
   } as React.CSSProperties,
   output: {
     flex: 1,
-    backgroundColor: "blueviolet",
     overflow: "hidden",
   } as React.CSSProperties,
 };
 
 function JsonEditor() {
-  const [jsonValue, setJsonValue] = useState<unknown>(null);
-  const [orgValue, setOrgValue] = useState<string>("");
+  const [state, setState] = useState({
+    jsonValue: null as unknown,
+    orgValue: "",
+    error: null as string | null
+  });
 
   // 处理编辑器内容变化
   const handleEditorChange = useCallback((value: string | undefined) => {
-    if (value !== undefined) {
-      setOrgValue(value);
-      db.jsonParseHistory.add({
-        jsonString: value,
-        date: new Date().getTime(),
-      });
-    }
+    if (!value) return;
+    
+    db.jsonParseHistory.add({
+      jsonString: value,
+      date: new Date().getTime(),
+    });
+    
     try {
       const parsedValue = parseJsonDeep(value);
-      console.log("🚀 ~ Parsed JSON:", parsedValue);
-      setJsonValue(parsedValue);
+      setState(prev => ({
+        ...prev,
+        orgValue: value,
+        jsonValue: parsedValue,
+        error: null
+      }));
     } catch (error) {
-      console.error("Failed to parse JSON:", error);
-      setJsonValue(null);
+      setState(prev => ({
+        ...prev,
+        orgValue: value,
+        jsonValue: null,
+        error: error instanceof Error ? error.message : "Invalid JSON"
+      }));
     }
   }, []);
 
@@ -53,8 +64,9 @@ function JsonEditor() {
       console.log("🚀 ~ arr:", data);
       if (data.length) {
         const history = data.pop();
-        setOrgValue(history?.jsonString || "");
-        handleEditorChange(history?.jsonString);
+        if (history?.jsonString) {
+          handleEditorChange(history.jsonString);
+        }
       }
     });
   }, []);
@@ -62,12 +74,12 @@ function JsonEditor() {
   return (
     <div style={styles.container}>
       <ResizeBox>
-        <MonacoEditor value={orgValue} onChange={handleEditorChange} />
+        <MonacoEditor value={state.orgValue} onChange={handleEditorChange} />
       </ResizeBox>
 
       <div style={styles.output}>
         <MonacoEditor
-          value={JSON.stringify(jsonValue, null, 4) || ""}
+          value={JSON.stringify(state.jsonValue, null, 4) || ""}
           readOnly
         />
       </div>
@@ -76,6 +88,14 @@ function JsonEditor() {
 }
 
 // 提取通用 MonacoEditor 组件
+const MONACO_OPTIONS = {
+  theme: "vs-dark", 
+  defaultLanguage: "json",
+  automaticLayout: true,
+  minimap: { enabled: false },
+  scrollBeyondLastLine: false,
+};
+
 function MonacoEditor({
   value,
   onChange,
@@ -87,14 +107,9 @@ function MonacoEditor({
 }) {
   return (
     <Editor
-      theme="vs-dark"
-      defaultLanguage="json"
       value={value}
       onChange={onChange}
-      options={{
-        readOnly,
-        automaticLayout: true, // 自动布局
-      }}
+      options={{...MONACO_OPTIONS, readOnly}}
     />
   );
 }
