@@ -1,7 +1,7 @@
 import { ReactNode, useEffect, useRef } from "react";
 import { throttle } from "lodash";
 import "./index.css";
-
+热区;
 export const ResizeBox = (props: { children: ReactNode }) => {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
