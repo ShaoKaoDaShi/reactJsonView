@@ -48,3 +48,19 @@ export default tseslint.config({
   },
 });
 ```
+
+TODO:
+
+- [ ] 使用indexdb作为本地存储， 方便每次打开网页的时候展示上次的parse信息
+- [ ] pwa版本，
+- [ ] 浏览器插件版本，
+- [ ] electron版本，
+- [ ] vscode插件版本
+- [ ] 发布到应用市场进行使用
+- [ ] 移动版
+- [ ] 推广这个的使用，比如在掘金，知乎，csdn，github等平台进行推广
+- [ ] 设计自己的github icon
+
+Tips:
+
+- github page icon 需要等几天之后才会更新上

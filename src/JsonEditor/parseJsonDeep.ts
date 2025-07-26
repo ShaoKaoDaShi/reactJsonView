@@ -1,22 +1,73 @@
-export function parseJsonDeep(target: any) {
-  let a: unknown;
-  if (typeof target === "object" && target !== null) {
-    Reflect.ownKeys(target).forEach((key) => {
-      target[key] = parseJsonDeep(target[key]);
-    });
-  }
-  if (Array.isArray(target)) {
-    target.forEach((item, index) => {
-      target[index] = parseJsonDeep(item);
-    });
-  }
+type StackItem = {
+  obj: unknown;
+  key?: string;
+  parent?: unknown;
+};
+
+export function parseJsonDeep(target: unknown): unknown {
+  let parsedTarget: unknown;
+
   try {
-    a = JSON.parse(target);
-    console.log("🚀 ~ file: index1.html:16 ~ parseJsonDeep ~ a:", a);
+    parsedTarget = JSON.parse(target as string);
   } catch (e) {
-    console.log("🚀 ~ parseJsonDeep ~ e:", e);
-    a = target;
-    console.log("🚀 ~ file: index1.html:24 ~ parseJsonDeep ~ a:", a);
+    console.error("Failed to parse JSON:", e);
+    return target;
   }
-  return a;
+
+  const stack: StackItem[] = [];
+
+  if (isObject(parsedTarget)) {
+    stack.push({ obj: parsedTarget });
+  }
+
+  while (stack.length > 0) {
+    const { obj, key, parent } = stack.pop()!;
+
+    if (Array.isArray(obj)) {
+      processArray(obj, stack);
+    } else if (isObject(obj)) {
+      processObject(obj, stack);
+    }
+
+    if (key && parent && isObject(parent)) {
+      (parent as Record<string, unknown>)[key] = obj;
+    }
+  }
+
+  return parsedTarget;
 }
+
+function isObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function processArray(arr: unknown[], stack: StackItem[]) {
+  arr.forEach((item, i) => {
+    const parsed = parseValue(item);
+    arr[i] = parsed;
+    if (isObject(parsed)) {
+      stack.push({ obj: parsed });
+    }
+  });
+}
+
+function processObject(obj: Record<string, unknown>, stack: StackItem[]) {
+  Object.keys(obj).forEach(key => {
+    const parsed = parseValue(obj[key]);
+    obj[key] = parsed;
+    if (isObject(parsed)) {
+      stack.push({ obj: parsed });
+    }
+  });
+}
+
+const parseValue = (value: string | unknown): unknown => {
+  if (typeof value === 'string') {
+    try {
+      return JSON.parse(value);
+    } catch {
+      return value;
+    }
+  }
+  return value;
+};
