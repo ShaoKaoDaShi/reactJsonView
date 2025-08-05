@@ -141,43 +141,70 @@ const DiffViewer: React.FC<DiffViewerProps> = ({
     diff.forEach((change, changeIndex) => {
       const lines = change.value
         .split("\n")
-        .filter((line) => line.length > 0 || lines.length > 1);
+        .filter((line, index, arr) => line.length > 0 || arr.length > 1);
 
       lines.forEach((line, lineIndex) => {
         if (change.added) {
           newLineNumber++;
           elements.push(
             <DiffRow key={`${changeIndex}-${lineIndex}`} type="added">
-              <LineNumber />
-              <LineNumber>{newLineNumber}</LineNumber>
-              <LineContent>
+              <LineNumber>
+                {newLineNumber}
                 <Marker type="added">+</Marker>
-                {line}
-              </LineContent>
+              </LineNumber>
+              <LineContent>{line}</LineContent>
             </DiffRow>
           );
         } else if (change.removed) {
           oldLineNumber++;
           elements.push(
             <DiffRow key={`${changeIndex}-${lineIndex}`} type="removed">
-              <LineNumber>{oldLineNumber}</LineNumber>
-              <LineNumber />
-              <LineContent>
+              <LineNumber>
+                {oldLineNumber}
                 <Marker type="removed">-</Marker>
-                {line}
-              </LineContent>
+              </LineNumber>
+              {/* <LineNumber /> */}
+              <LineContent>{line}</LineContent>
             </DiffRow>
           );
         } else {
           oldLineNumber++;
           newLineNumber++;
-          elements.push(
-            <DiffRow key={`${changeIndex}-${lineIndex}`} type="unchanged">
-              <LineNumber>{oldLineNumber}</LineNumber>
-              <LineNumber>{newLineNumber}</LineNumber>
-              <LineContent>{line}</LineContent>
-            </DiffRow>
-          );
+          if (showCharacterDiff && lines.length === 1 && line) {
+            // 检查是否有字符级别的变化
+            const oldLines = oldText.split("\n");
+            const newLines = newText.split("\n");
+            const oldLineContent = oldLines[oldLineNumber - 1] || "";
+            const newLineContent = newLines[newLineNumber - 1] || "";
+
+            if (oldLineContent !== newLineContent) {
+              elements.push(
+                <DiffRow key={`${changeIndex}-${lineIndex}`} type="changed">
+                  <LineNumber>{oldLineNumber}</LineNumber>
+                  <LineNumber>{newLineNumber}</LineNumber>
+                  <LineContent>
+                    {renderCharacterDiff(oldLineContent, newLineContent)}
+                  </LineContent>
+                </DiffRow>
+              );
+            } else {
+              elements.push(
+                <DiffRow key={`${changeIndex}-${lineIndex}`} type="unchanged">
+                  {/* <LineNumber>{oldLineNumber}</LineNumber> */}
+                  <LineNumber>{newLineNumber}</LineNumber>
+                  <LineContent>{line}</LineContent>
+                </DiffRow>
+              );
+            }
+          } else {
+            elements.push(
+              <DiffRow key={`${changeIndex}-${lineIndex}`} type="unchanged">
+                <LineNumber>{oldLineNumber}</LineNumber>
+                <LineNumber>{newLineNumber}</LineNumber>
+                <LineContent>{line}</LineContent>
+              </DiffRow>
+            );
+          }
         }
       });
     });
@@ -191,14 +218,12 @@ const DiffViewer: React.FC<DiffViewerProps> = ({
     <Container>
       <Header>
         {fileName} -
-        <span style={{ color: "#28a745", marginLeft: 8 }}>
-          +{stats.added} 新增
-        </span>
+        <span style={{ color: "#28a745", marginLeft: 8 }}>+{stats.added}</span>
         <span style={{ color: "#d73a49", marginLeft: 8 }}>
-          -{stats.removed} 删除
+          -{stats.removed}
         </span>
         <span style={{ color: "#656d76", marginLeft: 8 }}>
-          {stats.unchanged} 未改变
+          {stats.unchanged} unchanged
         </span>
       </Header>
       <DiffTable>{renderDiff()}</DiffTable>
